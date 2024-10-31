@@ -1,6 +1,8 @@
 import random
 import time
 import os
+import csv
+productos={}
 
 def menuInicial():
     """Funcion que permite seleccionar una opcion de accion de sesion de usuario."""
@@ -38,6 +40,10 @@ def menuPrincipal():
         print("*  2. Total de facturación por tipo de producto, la cantidad vendida y el costo asociado              *")
         print("*  3. Seleccionar tipo de producto, detallado en la facturación y la cantidad vendida por dia de este *")
         print("*  4. Cerrar Sesión                                                                                   *")
+        print("*  5. Alta de producto *")
+        print("*  6. Modificar stock *")
+
+
         print("*******************************************************************************************************")
 
         #print("*  1. Consultar stock (precio - categoria - marca)                                                    *")
@@ -47,11 +53,11 @@ def menuPrincipal():
         try:
             opcion = int(input("\nSeleccionar una opción: "))
             
-            if opcion >= 1 and opcion < 5:
+            if opcion >= 1 and opcion <=6:
                 ok = False
                 return opcion
             else:
-                print("Por favor, elige una opción válida (1-4)")
+                print("Por favor, elige una opción válida (1-6)")
         except ValueError:
             print("Error: Debes ingresar un número.")
 
@@ -95,6 +101,65 @@ def iniciarSesion(diccionario_usuarios, intentos):
                     bandera = False
 
     return intentos
+
+def escribir_csv_productos():
+    with open("inventario.csv", mode="w", newline='') as file:
+        writer = csv.writer(file)
+        # Cabeceras
+        writer.writerow(["ID", "Nombre", "Categoría", "Precio", "Stock"])
+        # Escribe cada producto
+        for producto_id, datos in productos.items():
+            writer.writerow([producto_id, datos["nombre"], datos["categoria"], datos["precio"], datos["stock"]])
+
+def agregar_producto():
+    """Función para agregar un producto al inventario y registrarlo en el CSV."""
+    nombre = input("Ingrese el nombre del producto: ")
+    categoria = input("Ingrese la categoría del producto: ")
+    
+    while True:
+        try:
+            precio = float(input("Ingrese el precio del producto: "))
+            stock_inicial = int(input("Ingrese el stock inicial del producto: "))
+            break
+        except ValueError:
+            print("Error: Asegúrate de ingresar un número para el precio y el stock.")
+    
+    producto_id = len(productos) + 1  
+    productos[producto_id] = {
+        "nombre": nombre,
+        "categoria": categoria,
+        "precio": precio,
+        "stock": stock_inicial
+    }
+    
+    print(f"\nProducto '{nombre}' agregado exitosamente con ID {producto_id}.\n")
+    escribir_csv_productos()
+
+def ver_productos():
+    """Función para mostrar todos los productos en el inventario."""
+    if productos:
+        print("\nProductos en inventario:\n")
+        for producto_id, datos in productos.items():
+            print(f"ID: {producto_id} | Nombre: {datos['nombre']} | Categoría: {datos['categoria']} | Precio: ${datos['precio']} | Stock: {datos['stock']}")
+    else:
+        print("No hay productos en el inventario.\n")
+
+def modificar_stock_producto():
+    """Función para modificar el stock de un producto existente."""
+    try:
+        producto_id = int(input("Ingrese el ID del producto cuyo stock desea modificar: "))
+        if producto_id in productos:
+            cantidad = int(input("Ingrese la cantidad para agregar o reducir (número positivo para agregar, negativo para reducir): "))
+            productos[producto_id]["stock"] += cantidad
+            # Evita que el stock sea negativo
+            if productos[producto_id]["stock"] < 0:
+                productos[producto_id]["stock"] = 0
+            print(f"\nEl stock del producto '{productos[producto_id]['nombre']}' ha sido actualizado. Nuevo stock: {productos[producto_id]['stock']}\n")
+            escribir_csv_productos()  
+        else:
+            print("El ID ingresado no existe en el inventario.\n")
+    except ValueError:
+        print("Error: Asegúrate de ingresar un número válido para el ID y la cantidad.\n")
 
 #Se carga Stock con la cantidad de productos random de 15-100 por producto
 def generarRandStock():
@@ -252,8 +317,8 @@ def menu_3(ListaXDiaPdvTot,CantidadTotProd):
 
 def main():
     diccionario_usuarios = {0000:
-                            {"nombre y apellido":"Administrador",
-                            "contrasena":"admin"}
+                            {"nombre y apellido": "Administrador",
+                             "contrasena": "admin"}
                             }
 
     salir = True
@@ -263,35 +328,39 @@ def main():
         seleccion = menuInicial()
 
         if seleccion == 1:
-            intentos=0
+            intentos = 0
             os.system('cls' if os.name == 'nt' else 'clear')
             intentos = iniciarSesion(diccionario_usuarios, intentos)        
-            
+
             salir2 = True
 
             while salir2:
                     
-                if intentos==1:
-                    intentos=0
-                    seleccion=4
+                if intentos == 1:
+                    intentos = 0
+                    seleccion = 4
                 else:
                     seleccion = menuPrincipal()
 
                     if seleccion == 1:
-                        menu_1(generarPreciosTotales(ListaXDiaPdvTot),ventasTot,generarCostosTotales(ListaXDiaCostTot))
+                        menu_1(generarPreciosTotales(ListaXDiaPdvTot), ventasTot, generarCostosTotales(ListaXDiaCostTot))
                     elif seleccion == 2:
                         menu_2(generarPreciosTotales(ListaXDiaPdvTot), totalVentas, generarCostosTotales(ListaXDiaCostTot))
                     elif seleccion == 3:
-                        menu_3(ListaXDiaPdvTot,CantidadTotProd)
+                        menu_3(ListaXDiaPdvTot, CantidadTotProd)
                     elif seleccion == 4:
-                        # Cerrar sesion
                         os.system('cls' if os.name == 'nt' else 'clear')
                         print("Sesión cerrada.")                        
-                        salir2=False
-            else:
-                print("\n   ¡¡¡¡Gracias por utilizar nuestro Sistema!!!!")
-                print("\n\t\t***** ADIOS *****\n")
-                salir = False
+                        salir2 = False
+                    elif seleccion == 5:
+                        agregar_producto()
+                    elif seleccion==6:
+                        modificar_stock_producto()  
+        else:
+            print("\n   ¡Gracias por utilizar nuestro Sistema!")
+            print("\n\t\t***** ADIOS *****\n")
+            salir = False
+
 
 
 #******** Programa Principal ********
