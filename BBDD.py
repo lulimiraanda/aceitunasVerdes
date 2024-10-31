@@ -39,9 +39,9 @@ def menuPrincipal():
         print("*  1. Total de facturación del mes, productos totales que se vendieron y el costo asociado            *")
         print("*  2. Total de facturación por tipo de producto, la cantidad vendida y el costo asociado              *")
         print("*  3. Seleccionar tipo de producto, detallado en la facturación y la cantidad vendida por dia de este *")
-        print("*  4. Cerrar Sesión                                                                                   *")
-        print("*  5. Alta de producto *")
-        print("*  6. Modificar stock *")
+        print("*  4. Alta de producto *")
+        print("*  5. Modificar stock *")
+        print("*  6. Cerrar Sesión                                                                                   *")
 
 
         print("*******************************************************************************************************")
@@ -348,13 +348,13 @@ def main():
                         menu_2(generarPreciosTotales(ListaXDiaPdvTot), totalVentas, generarCostosTotales(ListaXDiaCostTot))
                     elif seleccion == 3:
                         menu_3(ListaXDiaPdvTot, CantidadTotProd)
-                    elif seleccion == 4:
+                    elif seleccion == 6:
                         os.system('cls' if os.name == 'nt' else 'clear')
                         print("Sesión cerrada.")                        
                         salir2 = False
-                    elif seleccion == 5:
+                    elif seleccion == 4:
                         agregar_producto()
-                    elif seleccion==6:
+                    elif seleccion==5:
                         modificar_stock_producto()  
         else:
             print("\n   ¡Gracias por utilizar nuestro Sistema!")
