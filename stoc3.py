@@ -8,6 +8,7 @@ usuarios_validos = {
 
 # Diccionario para almacenar los productos y sus cantidades y precios
 stock = {}
+ventas = []  # Lista para registrar las ventas
 
 # Ventana de inicio de sesión
 def ventana_inicio_sesion():
@@ -76,7 +77,41 @@ def ventana_control_stock():
             limpiar_entradas()
         else:
             messagebox.showwarning("Error", "Ingrese un producto válido, una cantidad numérica y un precio numérico.")
-
+    
+    # Función para registrar una venta
+    def registrar_venta():
+        producto = entrada_producto.get().strip()
+        cantidad = entrada_cantidad.get().strip()
+        
+        if producto in stock and cantidad.isdigit():
+            cantidad = int(cantidad)
+            if stock[producto]['cantidad'] >= cantidad:
+                # Registrar la venta
+                stock[producto]['cantidad'] -= cantidad
+                ventas.append({'producto': producto, 'cantidad': cantidad, 'precio': stock[producto]['precio'], 'total': stock[producto]['precio'] * cantidad})
+                messagebox.showinfo("Venta Registrada", f"Venta de {cantidad} unidades de '{producto}' registrada.")
+                actualizar_lista()
+                limpiar_entradas()
+            else:
+                messagebox.showwarning("Error", f"No hay suficiente stock de '{producto}'.")
+        else:
+            messagebox.showwarning("Error", "Producto no disponible o cantidad no válida.")
+    
+    # Función para generar el reporte de ventas
+    def generar_reporte():
+        if not ventas:
+            messagebox.showinfo("Reporte de Ventas", "No se han registrado ventas.")
+            return
+        
+        reporte = "Reporte de Ventas:\n"
+        total_ingresos = 0
+        for venta in ventas:
+            reporte += f"{venta['producto']}: {venta['cantidad']} unidades, Total: ${venta['total']:.2f}\n"
+            total_ingresos += venta['total']
+        
+        reporte += f"\nTotal de Ingresos: ${total_ingresos:.2f}"
+        messagebox.showinfo("Reporte de Ventas", reporte)
+    
     # Función para eliminar un producto del stock
     def eliminar_producto():
         producto = entrada_producto.get().strip()
@@ -97,8 +132,10 @@ def ventana_control_stock():
         
         if producto in stock:
             if cantidad.isdigit() and precio.replace('.', '', 1).isdigit():
-                stock[producto]['cantidad'] = int(cantidad)
-                stock[producto]['precio'] = float(precio)
+                cantidad = int(cantidad)
+                precio = float(precio)
+                stock[producto]['cantidad'] = cantidad
+                stock[producto]['precio'] = precio
                 messagebox.showinfo("Éxito", f"'{producto}' actualizado a {cantidad} unidades con precio ${precio:.2f}.")
                 actualizar_lista()
                 limpiar_entradas()
@@ -122,9 +159,11 @@ def ventana_control_stock():
     tk.Button(ventana, text="Agregar", command=agregar_producto).grid(row=3, column=0, padx=5, pady=5)
     tk.Button(ventana, text="Eliminar", command=eliminar_producto).grid(row=3, column=1, padx=5, pady=5)
     tk.Button(ventana, text="Modificar", command=modificar_producto).grid(row=4, column=0, columnspan=2, padx=5, pady=5)
+    tk.Button(ventana, text="Registrar Venta", command=registrar_venta).grid(row=5, column=0, columnspan=2, padx=5, pady=5)
+    tk.Button(ventana, text="Generar Reporte de Ventas", command=generar_reporte).grid(row=6, column=0, columnspan=2, padx=5, pady=5)
     
     lista_productos = tk.Listbox(ventana, width=50)
-    lista_productos.grid(row=5, column=0, columnspan=2, padx=5, pady=10)
+    lista_productos.grid(row=7, column=0, columnspan=2, padx=5, pady=10)
     
     ventana.mainloop()
 

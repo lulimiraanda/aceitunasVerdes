@@ -1,0 +1,107 @@
+USE IDD1_24JN2C_02
+GO
+ 
+--Ejercicio 7: Proyectar los productos activos
+SELECT NombreProducto, Precio
+FROM Producción.C11_Productos
+WHERE CantidadStock > 0;
+ 
+GO
+ 
+--Ejercicio 8: Listar materiales con baja existencia
+SELECT ID_Material, NombreMaterial, CantidadStock
+FROM Producción.C11_Materiales
+WHERE CantidadStock < 50;
+ 
+GO
+ 
+--Ejercicio 9: Órdenes de Producción en el último mes
+SELECT ID_OrdenProduccion, FechaOrden, ID_Producto, CantidadProducida
+FROM Producción.C11_OrdenesProduccion
+WHERE FechaOrden >= DATEADD(MONTH, -1, GETDATE());
+ 
+GO
+ 
+--Ejercicio 10: Crear vista vw_ProductosConStock
+CREATE VIEW vw_ProductosConStock AS
+SELECT ID_Producto, NombreProducto, Precio, CantidadStock
+FROM Producción.C11_Productos
+WHERE CantidadStock > 0;
+ 
+ 
+GO
+ 
+--Ejercicio 11: Función para verificar stock suficiente
+CREATE FUNCTION fn_VerificarStockSuficiente (@ID_Producto INT, @Cantidad INT)
+RETURNS BIT
+AS
+BEGIN
+    DECLARE @Suficiente BIT;
+    IF EXISTS (
+        SELECT 1
+        FROM Producción.C11_ProduccionMateriales pm
+        JOIN Producción.C11_Materiales m ON pm.ID_Material = m.ID_Material
+        WHERE pm.ID_Producto = @ID_Producto
+        AND (pm.CantidadNecesaria * @Cantidad) > m.CantidadStock
+    )
+    BEGIN
+        SET @Suficiente = 0; -- False
+    END
+    ELSE
+    BEGIN
+        SET @Suficiente = 1; -- True
+    END
+ 
+    RETURN @Suficiente;
+END;
+ 
+ 
+GO
+ 
+--Ejercicio 12: Listado de órdenes de producción con detalles de materiales
+SELECT op.ID_OrdenProduccion, op.FechaOrden, p.NombreProducto, 
+       pm.ID_Material, m.NombreMaterial, pm.CantidadNecesaria, m.CostoMaterial
+FROM Producción.C11_OrdenesProduccion op
+JOIN Producción.C11_Productos p ON op.ID_Producto = p.ID_Producto
+JOIN Producción.C11_ProduccionMateriales pm ON p.ID_Producto = pm.ID_Producto
+JOIN Producción.C11_Materiales m ON pm.ID_Material = m.ID_Material;
+ 
+ 
+GO
+ 
+--Ejercicio 13: Productos sin suficiente stock de materiales
+SELECT p.ID_Producto, p.NombreProducto, p.CantidadStock
+FROM Producción.C11_Productos p
+WHERE EXISTS (
+    SELECT 1
+    FROM Producción.C11_ProduccionMateriales pm
+    JOIN Producción.C11_Materiales m ON pm.ID_Material = m.ID_Material
+    WHERE pm.ID_Producto = p.ID_Producto
+    AND pm.CantidadNecesaria > m.CantidadStock
+);
+ 
+ 
+GO
+ 
+--Ejercicio 14: Productos con el costo total de producción más alto
+SELECT p.ID_Producto, p.NombreProducto, 
+       SUM(pm.CantidadNecesaria * m.CostoMaterial) AS CostoTotalProduccion
+FROM Producción.C11_Productos p
+JOIN Producción.C11_ProduccionMateriales pm ON p.ID_Producto = pm.ID_Producto
+JOIN Producción.C11_Materiales m ON pm.ID_Material = m.ID_Material
+GROUP BY p.ID_Producto, p.NombreProducto
+ORDER BY CostoTotalProduccion DESC
+OFFSET 0 ROWS FETCH NEXT 5 ROWS ONLY;
+ 
+GO
+ 
+--Ejercicio 15: Órdenes de producción recientes con cantidad mayor al promedio
+SELECT ID_OrdenProduccion, FechaOrden, ID_Producto, CantidadProducida
+FROM Producción.C11_OrdenesProduccion
+WHERE CantidadProducida > (
+    SELECT AVG(CantidadProducida)
+    FROM Producción.C11_OrdenesProduccion
+);
+ 
+ 
+GO
